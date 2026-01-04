@@ -8,6 +8,7 @@ A FastAPI-based application for tracking and analyzing SpaceX launches using the
 - **RESTful API**: Full API endpoints for programmatic access
 - **Launch Data Management**: Fetch and cache launch data from SpaceX API
 - **Advanced Filtering**: Filter launches by date range, rocket, success status, and launchpad
+- **Data Export**: Export filtered launch data to CSV or JSON formats with automatic pagination
 - **Statistical Analysis**:
   - Success rates by rocket
   - Launch counts by launchpad
@@ -31,7 +32,8 @@ spacex_launch_tracker/
 │   ├── services/           # Business logic layer
 │   │   ├── cache_service.py # Caching implementation
 │   │   ├── launch_service.py # Launch operations
-│   │   └── stats_service.py  # Statistics calculations
+│   │   ├── stats_service.py  # Statistics calculations
+│   │   └── export_service.py # Data export operations
 │   ├── controllers/        # FastAPI route handlers
 │   │   ├── launch_controller.py # API endpoints
 │   │   ├── stats_controller.py  # Statistics API
@@ -123,6 +125,12 @@ The web interface provides an easy way to explore SpaceX launch data without wri
    - Real-time filtering with "Apply Filters" button
    - Color-coded status badges (Success/Failed/Upcoming)
    - Shows mission name, date, rocket, launchpad, and flight number
+   - **Export Data:**
+     - Export to CSV format (includes all fields: mission name, date, rocket, launchpad, status, flight number, details)
+     - Export to JSON format (structured data with all launch properties)
+     - Exports respect current filters (only exports filtered results)
+     - Automatic pagination handles large datasets (>1000 launches)
+     - Timestamped filenames (e.g., `spacex_launches_20240115_143022.csv`)
 
 3. **Statistics Page** (`/web/statistics`)
    - **Overall Statistics:**
@@ -150,8 +158,89 @@ The web interface is built using:
 
 **Key Files:**
 - `app/controllers/web_controller.py` - Web route handlers
+- `app/services/export_service.py` - Export data processing
 - `app/templates/` - HTML templates with Jinja2
 - `app/main.py` - Template configuration and home route
+
+## Data Export
+
+The application provides robust data export functionality to download launch data in CSV or JSON formats.
+
+### Export Features
+
+- **Multiple Formats**: Export data as CSV (spreadsheet-compatible) or JSON (structured data)
+- **Filter Preservation**: Exports only include launches matching your current filters
+- **Large Dataset Support**: Automatic pagination handles datasets larger than 1000 launches
+- **Complete Data**: Includes all launch details (mission name, date, rocket, launchpad, success status, flight number, details)
+- **Timestamped Files**: Each export has a unique timestamp in the filename for easy organization
+
+### Export Endpoints
+
+**GET `/web/export/launches/csv`** - Export launches to CSV
+
+Query Parameters (all optional):
+- `rocket_name` (string): Filter by rocket name
+- `launchpad_name` (string): Filter by launchpad name
+- `success` (string): Filter by success status ("true" or "false")
+- `date_from` (string): Start date (ISO format: YYYY-MM-DD)
+- `date_to` (string): End date (ISO format: YYYY-MM-DD)
+
+Example:
+```bash
+# Export all successful Falcon 9 launches in 2023
+curl "http://localhost:8000/web/export/launches/csv?rocket_name=Falcon%209&success=true&date_from=2023-01-01&date_to=2023-12-31" -o launches.csv
+```
+
+**GET `/web/export/launches/json`** - Export launches to JSON
+
+Same query parameters as CSV endpoint.
+
+Example:
+```bash
+# Export all launches from LC-39A
+curl "http://localhost:8000/web/export/launches/json?launchpad_name=LC-39A" -o launches.json
+```
+
+### CSV Format
+
+CSV exports include the following columns:
+- Mission Name
+- Date (UTC)
+- Rocket
+- Launchpad
+- Success (Success/Failed/Upcoming)
+- Flight Number
+- Details
+
+### JSON Format
+
+JSON exports include the following fields per launch:
+```json
+{
+  "mission_name": "Starlink Mission",
+  "date_utc": "2024-01-15T10:30:00+00:00",
+  "rocket": "Falcon 9",
+  "launchpad": "LC-39A",
+  "success": true,
+  "flight_number": 100,
+  "details": "Successful Starlink deployment",
+  "upcoming": false
+}
+```
+
+### Using Export from Web Interface
+
+1. Navigate to `/web/launches`
+2. Apply any desired filters (rocket, launchpad, date range, success status)
+3. Click "Export to CSV" or "Export to JSON" button
+4. File downloads automatically with timestamped filename
+
+### Technical Implementation
+
+- **Pagination**: ExportService automatically handles API pagination to fetch all matching launches
+- **Memory Efficient**: Uses streaming response to handle large exports without loading entire dataset into memory
+- **Data Mapping**: Converts rocket/launchpad IDs to human-readable names
+- **Error Handling**: Returns JSON error response if export fails
 
 ## API Endpoints
 
@@ -249,6 +338,7 @@ External API clients and integrations:
 Business logic and data operations:
 - **LaunchService**: Manages launch data retrieval and filtering
 - **StatsService**: Calculates statistical metrics
+- **ExportService**: Handles data export to CSV/JSON formats with pagination
 - **CacheService**: File-based caching implementation
 
 ### Controllers Layer
