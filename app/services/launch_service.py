@@ -71,10 +71,13 @@ class LaunchService:
             ]
             launches = [l for l in launches if l.launchpad in launchpad_ids]
 
-        # Apply pagination
-        start_idx = filters.offset
-        end_idx = start_idx + filters.limit
-        return launches[start_idx:end_idx]
+        # Apply pagination if limit is set
+        if filters.limit is not None:
+            start_idx = filters.offset
+            end_idx = start_idx + filters.limit
+            return launches[start_idx:end_idx]
+
+        return launches
 
     async def get_launch_by_id(self, launch_id: str) -> Optional[Launch]:
         """

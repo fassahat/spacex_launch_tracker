@@ -140,30 +140,27 @@ class TestPrepareData:
         assert filter_obj.date_to == datetime(2024, 1, 31, 23, 59, 59, tzinfo=timezone.utc)
 
     @pytest.mark.asyncio
-    async def test_prepare_launch_data_with_pagination(
+    async def test_prepare_launch_data_with_large_dataset(
         self, export_service, mock_launch_service, sample_rockets,
         sample_launchpads, sample_launches
     ):
-        """Test preparing launch data with pagination (multiple pages)."""
+        """Test preparing launch data with large dataset (no pagination needed)."""
         # Setup mocks
         mock_launch_service.api_client.get_all_rockets = AsyncMock(return_value=sample_rockets)
         mock_launch_service.api_client.get_all_launchpads = AsyncMock(return_value=sample_launchpads)
 
-        # Simulate pagination: first call returns 1000 items, second returns remaining items
-        first_page = sample_launches * 334  # 1002 items (simulate full page)
-        second_page = sample_launches[:2]  # 2 items (last page)
+        # Simulate large dataset - all returned in single call
+        large_dataset = sample_launches * 334  # 1002 items
 
-        mock_launch_service.get_filtered_launches = AsyncMock(side_effect=[
-            first_page[:1000],  # First call returns 1000
-            second_page  # Second call returns remaining
-        ])
+        mock_launch_service.get_filtered_launches = AsyncMock(return_value=large_dataset)
 
         # Call method
         launches, _, _ = await export_service.prepare_launch_data()
 
         # Assertions
         assert len(launches) == 1002
-        assert mock_launch_service.get_filtered_launches.call_count == 2
+        # Should only call once since pagination loop was removed
+        assert mock_launch_service.get_filtered_launches.call_count == 1
 
     @pytest.mark.asyncio
     async def test_prepare_launch_data_empty_result(

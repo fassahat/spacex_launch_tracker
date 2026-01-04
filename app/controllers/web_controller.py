@@ -185,10 +185,11 @@ async def export_launches_csv(
             rocket_name, launchpad_name, success, date_from, date_to
         )
 
-        csv_content = export_service.generate_csv(launches, rocket_map, launchpad_map)
+        # Use streaming generator for memory efficiency
+        csv_stream = export_service.generate_csv_stream(launches, rocket_map, launchpad_map)
 
         return StreamingResponse(
-            iter([csv_content]),
+            csv_stream,
             media_type="text/csv",
             headers={
                 "Content-Disposition": f"attachment; filename=spacex_launches_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -216,10 +217,11 @@ async def export_launches_json(
             rocket_name, launchpad_name, success, date_from, date_to
         )
 
-        json_content = export_service.generate_json(launches, rocket_map, launchpad_map)
+        # Use streaming generator for memory efficiency
+        json_stream = export_service.generate_json_stream(launches, rocket_map, launchpad_map)
 
         return StreamingResponse(
-            iter([json_content]),
+            json_stream,
             media_type="application/json",
             headers={
                 "Content-Disposition": f"attachment; filename=spacex_launches_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

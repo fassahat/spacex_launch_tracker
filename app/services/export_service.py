@@ -3,7 +3,7 @@
 import csv
 import io
 import json
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Iterator
 from datetime import datetime, timezone
 
 from app.models.launch import Launch, LaunchFilter
@@ -46,57 +46,48 @@ class ExportService:
                 hour=23, minute=59, second=59, tzinfo=timezone.utc
             )
 
-        # Fetch all launches with pagination (max limit is 1000)
-        all_launches = []
-        offset = 0
-        limit = 1000
+        # Fetch all launches with filters (no pagination for export)
+        launch_filters = LaunchFilter(
+            rocket_name=rocket_name if rocket_name else None,
+            launchpad_name=launchpad_name if launchpad_name else None,
+            success=success.lower() == 'true' if success and success.lower() in ('true', 'false') else None,
+            date_from=date_from_utc,
+            date_to=date_to_utc,
+            limit=None,
+            offset=0,
+        )
 
-        while True:
-            launch_filters = LaunchFilter(
-                rocket_name=rocket_name if rocket_name else None,
-                launchpad_name=launchpad_name if launchpad_name else None,
-                success=success.lower() == 'true' if success and success != '' else None,
-                date_from=date_from_utc,
-                date_to=date_to_utc,
-                limit=limit,
-                offset=offset
-            )
+        launches = await self.launch_service.get_filtered_launches(
+            launch_filters,
+            rocket_id_map=rocket_map,
+            launchpad_id_map=launchpad_map
+        )
 
-            launches = await self.launch_service.get_filtered_launches(
-                launch_filters,
-                rocket_id_map=rocket_map,
-                launchpad_id_map=launchpad_map
-            )
+        return launches, rocket_map, launchpad_map
 
-            if not launches:
-                break
-
-            all_launches.extend(launches)
-
-            if len(launches) < limit:
-                break
-
-            offset += limit
-
-        return all_launches, rocket_map, launchpad_map
-
-    def generate_csv(
+    def generate_csv_stream(
         self,
         launches: List[Launch],
         rocket_map: Dict[str, str],
         launchpad_map: Dict[str, str]
-    ) -> str:
-        """Generate CSV content from launch data."""
+    ) -> Iterator[str]:
+        """
+        Generate CSV content as an iterator for memory-efficient streaming.
+        Yields CSV rows one at a time instead of building entire file in memory.
+        """
         output = io.StringIO()
         writer = csv.writer(output)
 
-        # Write header
+        # Write and yield header
         writer.writerow([
             'Mission Name', 'Date (UTC)', 'Rocket', 'Launchpad',
             'Success', 'Flight Number', 'Details'
         ])
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
 
-        # Write data
+        # Write and yield data rows
         for launch in launches:
             writer.writerow([
                 launch.name,
@@ -107,9 +98,65 @@ class ExportService:
                 launch.flight_number or '-',
                 launch.details or ''
             ])
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
 
-        output.seek(0)
-        return output.getvalue()
+    def generate_csv(
+        self,
+        launches: List[Launch],
+        rocket_map: Dict[str, str],
+        launchpad_map: Dict[str, str]
+    ) -> str:
+        """Generate CSV content from launch data (non-streaming, for compatibility)."""
+        return ''.join(self.generate_csv_stream(launches, rocket_map, launchpad_map))
+
+    def _serialize_launch(
+        self,
+        launch: Launch,
+        rocket_map: Dict[str, str],
+        launchpad_map: Dict[str, str]
+    ) -> dict:
+        """Convert a launch object to a dictionary for JSON serialization."""
+        return {
+            "mission_name": launch.name,
+            "date_utc": launch.date_utc.isoformat() if launch.date_utc else None,
+            "rocket": rocket_map.get(launch.rocket, launch.rocket or 'Unknown'),
+            "launchpad": launchpad_map.get(launch.launchpad, launch.launchpad or 'Unknown'),
+            "success": launch.success,
+            "flight_number": launch.flight_number,
+            "details": launch.details,
+            "upcoming": launch.upcoming
+        }
+
+    def generate_json_stream(
+        self,
+        launches: List[Launch],
+        rocket_map: Dict[str, str],
+        launchpad_map: Dict[str, str]
+    ) -> Iterator[str]:
+        """
+        Generate JSON content as an iterator for memory-efficient streaming.
+        Yields JSON in chunks instead of building entire array in memory.
+        """
+        # Yield opening bracket
+        yield "[\n"
+
+        # Yield each launch object
+        for i, launch in enumerate(launches):
+            launch_dict = self._serialize_launch(launch, rocket_map, launchpad_map)
+            # Add proper indentation and comma handling
+            json_str = json.dumps(launch_dict, indent=2)
+            # Indent each line by 2 spaces to match array formatting
+            indented = '\n'.join('  ' + line for line in json_str.split('\n'))
+
+            if i < len(launches) - 1:
+                yield indented + ',\n'
+            else:
+                yield indented + '\n'
+
+        # Yield closing bracket
+        yield "]"
 
     def generate_json(
         self,
@@ -117,18 +164,5 @@ class ExportService:
         rocket_map: Dict[str, str],
         launchpad_map: Dict[str, str]
     ) -> str:
-        """Generate JSON content from launch data."""
-        export_data = []
-        for launch in launches:
-            export_data.append({
-                "mission_name": launch.name,
-                "date_utc": launch.date_utc.isoformat() if launch.date_utc else None,
-                "rocket": rocket_map.get(launch.rocket, launch.rocket or 'Unknown'),
-                "launchpad": launchpad_map.get(launch.launchpad, launch.launchpad or 'Unknown'),
-                "success": launch.success,
-                "flight_number": launch.flight_number,
-                "details": launch.details,
-                "upcoming": launch.upcoming
-            })
-
-        return json.dumps(export_data, indent=2)
+        """Generate JSON content from launch data (non-streaming, for compatibility)."""
+        return ''.join(self.generate_json_stream(launches, rocket_map, launchpad_map))
