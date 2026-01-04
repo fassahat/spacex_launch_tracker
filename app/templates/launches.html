@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Launches - SpaceX Launch Tracker{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">SpaceX Launches</h2>
+
+<div class="filters">
+    <form method="get" action="/web/launches">
+        <div class="form-group">
+            <label for="rocket_name">Rocket</label>
+            <input type="text" id="rocket_name" name="rocket_name" placeholder="e.g., Falcon 9" value="{{ filters.rocket_name or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="launchpad_name">Launchpad</label>
+            <input type="text" id="launchpad_name" name="launchpad_name" placeholder="e.g., LC-39A" value="{{ filters.launchpad_name or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="success">Success Status</label>
+            <select id="success" name="success">
+                <option value="">All</option>
+                <option value="true" {% if filters.success == "true" %}selected{% endif %}>Successful</option>
+                <option value="false" {% if filters.success == "false" %}selected{% endif %}>Failed</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date_from">From Date</label>
+            <input type="date" id="date_from" name="date_from" value="{{ filters.date_from or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="date_to">To Date</label>
+            <input type="date" id="date_to" name="date_to" value="{{ filters.date_to or '' }}">
+        </div>
+        <div class="form-group" style="justify-content: flex-end;">
+            <label>&nbsp;</label>
+            <button type="submit">Apply Filters</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Launch Results ({{ launches|length }} found)</h3>
+
+    {% if error %}
+    <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    {% if launches %}
+    <table>
+        <thead>
+            <tr>
+                <th>Mission Name</th>
+                <th>Date (UTC)</th>
+                <th>Rocket</th>
+                <th>Launchpad</th>
+                <th>Status</th>
+                <th>Flight #</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for launch in launches %}
+            <tr>
+                <td><strong>{{ launch.name }}</strong></td>
+                <td>
+                    {% if launch.date_utc %}
+                        {{ launch.date_utc.strftime('%Y-%m-%d %H:%M') }}
+                    {% else %}
+                        TBD
+                    {% endif %}
+                </td>
+                <td>{{ rocket_map.get(launch.rocket, launch.rocket or 'Unknown') }}</td>
+                <td>{{ launchpad_map.get(launch.launchpad, launch.launchpad or 'Unknown') }}</td>
+                <td>
+                    {% if launch.upcoming %}
+                        <span class="badge badge-warning">Upcoming</span>
+                    {% elif launch.success == true %}
+                        <span class="badge badge-success">Success</span>
+                    {% elif launch.success == false %}
+                        <span class="badge badge-danger">Failed</span>
+                    {% else %}
+                        <span class="badge badge-warning">Unknown</span>
+                    {% endif %}
+                </td>
+                <td>{{ launch.flight_number or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #666; padding: 2rem; text-align: center;">No launches found matching your filters.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - SpaceX Launch Tracker{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Launch Statistics</h2>
+
+<!-- Overall Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Launches</h3>
+        <div class="value">{{ overall.total_launches }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Successful</h3>
+        <div class="value" style="color: #28a745;">{{ overall.successful_launches }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Failed</h3>
+        <div class="value" style="color: #dc3545;">{{ overall.failed_launches }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Success Rate</h3>
+        <div class="value">{{ "%.1f"|format(overall.overall_success_rate_percentage) }}%</div>
+    </div>
+</div>
+
+<!-- Success Rate by Rocket -->
+<div class="card">
+    <h2>Success Rate by Rocket</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Rocket</th>
+                <th>Total Launches</th>
+                <th>Successful</th>
+                <th>Success Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rocket_name, stats in success_rate.items() %}
+            <tr>
+                <td><strong>{{ rocket_name }}</strong></td>
+                <td>{{ stats.total_launches }}</td>
+                <td>{{ stats.successful_launches }}</td>
+                <td>
+                    <span class="badge {% if stats.success_rate_percentage >= 90 %}badge-success{% elif stats.success_rate_percentage >= 70 %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ "%.1f"|format(stats.success_rate_percentage) }}%
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Launchpad Statistics -->
+<div class="card">
+    <h2>Launchpad Statistics</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Launchpad</th>
+                <th>Total Launches</th>
+                <th>Successful</th>
+                <th>Success Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for launchpad_name, stats in launchpads.items() %}
+            <tr>
+                <td><strong>{{ launchpad_name }}</strong></td>
+                <td>{{ stats.total }}</td>
+                <td>{{ stats.successful }}</td>
+                <td>
+                    {% set success_pct = (stats.successful / stats.total * 100) if stats.total > 0 else 0 %}
+                    <span class="badge {% if success_pct >= 90 %}badge-success{% elif success_pct >= 70 %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ "%.1f"|format(success_pct) }}%
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Launch Frequency by Year -->
+<div class="card">
+    <h2>Launch Frequency by Year</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>Launches</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for year, count in frequency.by_year.items() | sort(reverse=True) %}
+            <tr>
+                <td><strong>{{ year }}</strong></td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Launch Frequency by Month -->
+<div class="card">
+    <h2>Recent Launch Frequency by Month (Last 12 months)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Launches</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for month, count in (frequency.by_month.items() | sort(reverse=True))[:12] %}
+            <tr>
+                <td><strong>{{ month }}</strong></td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

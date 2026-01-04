@@ -1,10 +1,12 @@
 """FastAPI application entry point."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 from app.config import settings
-from app.controllers import launch_controller, stats_controller
+from app.controllers import launch_controller, stats_controller, web_controller
 
 
 def create_app() -> FastAPI:
@@ -34,6 +36,7 @@ def create_app() -> FastAPI:
     # Register routers
     app.include_router(launch_controller.router)
     app.include_router(stats_controller.router)
+    app.include_router(web_controller.router)
 
     return app
 
@@ -41,10 +44,19 @@ def create_app() -> FastAPI:
 # Create app instance
 app = create_app()
 
+# Setup templates
+templates = Jinja2Templates(directory="app/templates")
 
-@app.get("/", tags=["health"])
+
+@app.get("/", response_class=HTMLResponse, tags=["web"])
+async def home(request: Request):
+    """Home page."""
+    return templates.TemplateResponse("home.html", {"request": request})
+
+
+@app.get("/api", tags=["health"])
 async def root() -> dict:
-    """Root endpoint - API health check."""
+    """API health check."""
     return {
         "message": "SpaceX Launch Tracker API",
         "version": settings.app_version,

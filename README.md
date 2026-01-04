@@ -4,6 +4,8 @@ A FastAPI-based application for tracking and analyzing SpaceX launches using the
 
 ## Features
 
+- **Web Interface**: Simple, user-friendly web interface to browse launches and view statistics
+- **RESTful API**: Full API endpoints for programmatic access
 - **Launch Data Management**: Fetch and cache launch data from SpaceX API
 - **Advanced Filtering**: Filter launches by date range, rocket, success status, and launchpad
 - **Statistical Analysis**:
@@ -31,14 +33,21 @@ spacex_launch_tracker/
 │   │   ├── launch_service.py # Launch operations
 │   │   └── stats_service.py  # Statistics calculations
 │   ├── controllers/        # FastAPI route handlers
-│   │   ├── launch_controller.py
-│   │   └── stats_controller.py
+│   │   ├── launch_controller.py # API endpoints
+│   │   ├── stats_controller.py  # Statistics API
+│   │   └── web_controller.py    # Web interface routes
+│   ├── templates/          # Jinja2 HTML templates
+│   │   ├── base.html       # Base template
+│   │   ├── home.html       # Home page
+│   │   ├── launches.html   # Launches list page
+│   │   └── statistics.html # Statistics page
 │   ├── config.py          # Application configuration
 │   └── main.py            # FastAPI app initialization
 ├── tests/                 # Test suite (mirrors main structure)
 │   ├── test_lib/          # API client tests
 │   ├── test_services/     # Business logic tests
-│   └── test_controllers/  # Controller tests
+│   ├── test_controllers/  # Controller tests
+│   └── conftest.py        # Pytest configuration & fixtures
 ├── requirements.txt       # Python dependencies
 ├── pytest.ini            # Pytest configuration
 └── README.md             # This file
@@ -81,11 +90,68 @@ spacex_launch_tracker/
 uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
+The application will be available at `http://localhost:8000`
 
-**API Documentation:**
+### Access Points
+
+**Web Interface (Recommended for browsing):**
+- Home: `http://localhost:8000/`
+- Browse Launches: `http://localhost:8000/web/launches`
+- View Statistics: `http://localhost:8000/web/statistics`
+
+**API Documentation (For developers):**
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
+
+## Using the Web Interface
+
+The web interface provides an easy way to explore SpaceX launch data without writing code.
+
+### Features
+
+1. **Home Page** (`/`)
+   - Overview of application features
+   - Quick links to launches and statistics
+
+2. **Launches Page** (`/web/launches`)
+   - Browse all SpaceX launches in a table format
+   - **Filters:**
+     - Rocket name (e.g., "Falcon 9", "Falcon Heavy")
+     - Launchpad name (e.g., "LC-39A")
+     - Success status (Successful/Failed)
+     - Date range (From/To dates)
+   - Real-time filtering with "Apply Filters" button
+   - Color-coded status badges (Success/Failed/Upcoming)
+   - Shows mission name, date, rocket, launchpad, and flight number
+
+3. **Statistics Page** (`/web/statistics`)
+   - **Overall Statistics:**
+     - Total launches
+     - Successful launches
+     - Failed launches
+     - Overall success rate
+   - **Success Rate by Rocket:**
+     - Launch counts per rocket
+     - Success rates with color coding
+   - **Launchpad Statistics:**
+     - Launch counts per launchpad
+     - Success rates
+   - **Launch Frequency:**
+     - Launches by year
+     - Launches by month (last 12 months)
+
+### Implementation Details
+
+The web interface is built using:
+- **Backend**: FastAPI with Jinja2 templates
+- **Frontend**: Server-side rendered HTML with inline CSS
+- **Styling**: Clean, modern design with responsive layout
+- **Data**: Same backend services as the API (cached SpaceX data)
+
+**Key Files:**
+- `app/controllers/web_controller.py` - Web route handlers
+- `app/templates/` - HTML templates with Jinja2
+- `app/main.py` - Template configuration and home route
 
 ## API Endpoints
 
@@ -200,6 +266,7 @@ The application implements file-based caching with automatic cleanup:
 - **Automatic cleanup**: Expired and corrupted files are deleted on read
 - Reduces API calls and improves performance
 - No stale files accumulate on disk
+- **Test isolation**: Tests use disabled cache (via `tests/conftest.py`) to prevent pollution of production cache
 
 ## Error Handling
 
@@ -211,11 +278,15 @@ Robust error handling throughout:
 
 ## Testing Strategy
 
-Comprehensive test coverage:
+Comprehensive test coverage with cache isolation:
 - **Service tests**: Mock API calls, test business logic
 - **Controller tests**: Test HTTP endpoints and error handling
 - **Integration tests**: Verify component interactions
 - **Fixtures**: Reusable test data and mocks
+- **Cache isolation**: Tests automatically disable caching (via `conftest.py`) to prevent polluting production cache
+  - Most tests: `cache_enabled=False` (no file I/O)
+  - Cache-specific tests: Use `tmp_path` (temporary directory)
+  - Production cache remains clean and unaffected by tests
 
 ## Development
 
