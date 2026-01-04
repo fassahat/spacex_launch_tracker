@@ -1,7 +1,7 @@
 """Pydantic models for SpaceX launchpads."""
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Launchpad(BaseModel):
@@ -20,9 +20,8 @@ class Launchpad(BaseModel):
     status: Optional[str] = Field(None, description="Operational status")
     details: Optional[str] = Field(None, description="Additional details")
 
-    class Config:
-        """Pydantic config."""
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "5e9e4502f509094188566f88",
                 "name": "VAFB SLC 4E",
@@ -34,3 +33,4 @@ class Launchpad(BaseModel):
                 "launch_successes": 15
             }
         }
+    )

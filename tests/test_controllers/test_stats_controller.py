@@ -210,3 +210,47 @@ class TestStatsController:
 
                 assert response.status_code == 503
                 assert "SpaceX API error" in response.json()["detail"]
+
+    def test_success_rate_internal_error(self, client):
+        """Test generic exception handling returns 500 for success-rate endpoint."""
+        with patch("app.config.settings.cache_enabled", False):
+            with patch("app.services.stats_service.StatsService.get_success_rate_by_rocket") as mock_service:
+                mock_service.side_effect = ValueError("Unexpected error")
+
+                response = client.get("/stats/success-rate")
+
+                assert response.status_code == 500
+                assert "Internal error" in response.json()["detail"]
+
+    def test_launchpads_internal_error(self, client):
+        """Test generic exception handling returns 500 for launchpads endpoint."""
+        with patch("app.config.settings.cache_enabled", False):
+            with patch("app.services.stats_service.StatsService.get_launches_by_launchpad") as mock_service:
+                mock_service.side_effect = ValueError("Unexpected error")
+
+                response = client.get("/stats/launchpads")
+
+                assert response.status_code == 500
+                assert "Internal error" in response.json()["detail"]
+
+    def test_frequency_internal_error(self, client):
+        """Test generic exception handling returns 500 for frequency endpoint."""
+        with patch("app.config.settings.cache_enabled", False):
+            with patch("app.services.stats_service.StatsService.get_launch_frequency") as mock_service:
+                mock_service.side_effect = ValueError("Unexpected error")
+
+                response = client.get("/stats/frequency")
+
+                assert response.status_code == 500
+                assert "Internal error" in response.json()["detail"]
+
+    def test_overall_internal_error(self, client):
+        """Test generic exception handling returns 500 for overall endpoint."""
+        with patch("app.config.settings.cache_enabled", False):
+            with patch("app.services.stats_service.StatsService.get_overall_statistics") as mock_service:
+                mock_service.side_effect = ValueError("Unexpected error")
+
+                response = client.get("/stats/overall")
+
+                assert response.status_code == 500
+                assert "Internal error" in response.json()["detail"]

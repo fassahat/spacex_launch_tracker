@@ -2,7 +2,7 @@
 
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LaunchCore(BaseModel):
@@ -38,9 +38,8 @@ class Launch(BaseModel):
     cores: Optional[list[LaunchCore]] = Field(None, description="Launch cores/boosters")
     failures: Optional[list[LaunchFailure]] = Field(None, description="Failure details")
 
-    class Config:
-        """Pydantic config."""
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "5eb87cd9ffd86e000604b32a",
                 "name": "FalconSat",
@@ -51,6 +50,7 @@ class Launch(BaseModel):
                 "flight_number": 1
             }
         }
+    )
 
 
 class LaunchFilter(BaseModel):

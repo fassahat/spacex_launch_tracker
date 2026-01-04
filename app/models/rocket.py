@@ -1,7 +1,7 @@
 """Pydantic models for SpaceX rockets."""
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Rocket(BaseModel):
@@ -21,9 +21,8 @@ class Rocket(BaseModel):
     wikipedia: Optional[str] = Field(None, description="Wikipedia URL")
     description: Optional[str] = Field(None, description="Rocket description")
 
-    class Config:
-        """Pydantic config."""
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "5e9d0d95eda69973a809d1ec",
                 "name": "Falcon 9",
@@ -36,3 +35,4 @@ class Rocket(BaseModel):
                 "company": "SpaceX"
             }
         }
+    )
