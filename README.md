@@ -9,6 +9,7 @@ A FastAPI-based application for tracking and analyzing SpaceX launches using the
 - **Launch Data Management**: Fetch and cache launch data from SpaceX API
 - **Advanced Filtering**: Filter launches by date range, rocket, success status, and launchpad
 - **Data Export**: Export filtered launch data to CSV or JSON formats with automatic pagination
+- **Webhook Notifications**: Real-time notifications when new SpaceX launches are detected
 - **Statistical Analysis**:
   - Success rates by rocket
   - Launch counts by launchpad
@@ -30,19 +31,25 @@ spacex_launch_tracker/
 │   ├── lib/                # External libraries/API clients
 │   │   └── spacex_api.py   # SpaceX API client
 │   ├── services/           # Business logic layer
-│   │   ├── cache_service.py # Caching implementation
-│   │   ├── launch_service.py # Launch operations
-│   │   ├── stats_service.py  # Statistics calculations
-│   │   └── export_service.py # Data export operations
+│   │   ├── cache_service.py      # Caching implementation
+│   │   ├── launch_service.py     # Launch operations
+│   │   ├── stats_service.py      # Statistics calculations
+│   │   ├── export_service.py     # Data export operations
+│   │   ├── webhook_manager.py    # Webhook management
+│   │   └── background_service.py # Background task scheduler
 │   ├── controllers/        # FastAPI route handlers
-│   │   ├── launch_controller.py # API endpoints
-│   │   ├── stats_controller.py  # Statistics API
-│   │   └── web_controller.py    # Web interface routes
+│   │   ├── launch_controller.py  # Launch API endpoints
+│   │   ├── stats_controller.py   # Statistics API
+│   │   ├── web_controller.py     # Web interface routes
+│   │   └── webhook_controller.py # Webhook API endpoints
 │   ├── templates/          # Jinja2 HTML templates
 │   │   ├── base.html       # Base template
 │   │   ├── home.html       # Home page
 │   │   ├── launches.html   # Launches list page
 │   │   └── statistics.html # Statistics page
+│   ├── data/               # Data storage (gitignored)
+│   │   ├── webhooks.json   # Webhook subscriptions
+│   │   └── launches_cache.json # Launch tracking cache
 │   ├── config.py          # Application configuration
 │   └── main.py            # FastAPI app initialization
 ├── tests/                 # Test suite (mirrors main structure)
@@ -59,6 +66,14 @@ spacex_launch_tracker/
 
 - Python 3.8+
 - Dependencies listed in `requirements.txt`
+
+Key dependencies:
+- **FastAPI** - Web framework
+- **Uvicorn** - ASGI server
+- **Pydantic** - Data validation
+- **httpx** - Async HTTP client
+- **schedule** - Background task scheduling (for webhooks)
+- **requests** - HTTP library (for webhook delivery)
 
 ## Installation
 
@@ -242,6 +257,98 @@ JSON exports include the following fields per launch:
 - **Data Mapping**: Converts rocket/launchpad IDs to human-readable names
 - **Error Handling**: Returns JSON error response if export fails
 
+## Webhook Notifications
+
+The application includes a simple webhook notification system that sends HTTP POST requests when new SpaceX launches are detected.
+
+### How It Works
+
+- A background task checks for new launches every 5 seconds (configurable)
+- When a new launch is detected, registered webhooks receive a POST request
+- No external dependencies required - uses Python's built-in `threading` and `schedule` library
+- Data stored in JSON files (`app/data/webhooks.json` and `app/data/launches_cache.json`)
+
+### Webhook Endpoints
+
+**POST `/webhooks`** - Register a new webhook
+
+Request:
+```json
+{
+  "url": "https://your-webhook-url.com/endpoint",
+  "description": "My webhook description"
+}
+```
+
+Response:
+```json
+{
+  "id": 1,
+  "url": "https://your-webhook-url.com/endpoint",
+  "description": "My webhook description",
+  "active": true,
+  "created_at": "2026-01-05T12:00:00"
+}
+```
+
+**GET `/webhooks`** - List all webhooks
+
+Query Parameters:
+- `active_only` (boolean): Only return active webhooks (default: false)
+
+**DELETE `/webhooks/{webhook_id}`** - Delete a webhook
+
+### Webhook Payload
+
+When a new launch is detected, your endpoint receives:
+
+```json
+{
+  "event": "new_launch",
+  "timestamp": "2026-01-05T12:00:00",
+  "launch": {
+    "id": "5eb87cd9ffd86e000604b32a",
+    "name": "FalconSat",
+    "date_utc": "2006-03-24T22:30:00.000Z",
+    "success": false,
+    "upcoming": false,
+    "details": "Engine failure at 33 seconds...",
+    "flight_number": 1
+  }
+}
+```
+
+### Usage Example
+
+```bash
+# Register a webhook
+curl -X POST http://localhost:8000/webhooks \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://webhook.site/your-unique-id"}'
+
+# List webhooks
+curl http://localhost:8000/webhooks
+
+# Delete webhook
+curl -X DELETE http://localhost:8000/webhooks/1
+```
+
+### Configuration
+
+The background task runs **every 5 seconds** by default (for testing). To change the interval, edit `app/services/background_service.py`:
+
+```python
+schedule.every(5).seconds.do(check_new_launches)  # Change to .minutes, .hours, etc.
+# For production, use: schedule.every(1).hours.do(check_new_launches)
+```
+
+### Testing
+
+1. Use [webhook.site](https://webhook.site) to get a test URL
+2. Register the webhook URL
+3. Add a test launch or restart the app
+4. Check webhook.site for incoming requests
+
 ## API Endpoints
 
 ### Launches
@@ -340,6 +447,8 @@ Business logic and data operations:
 - **StatsService**: Calculates statistical metrics
 - **ExportService**: Handles data export to CSV/JSON formats with pagination
 - **CacheService**: File-based caching implementation
+- **WebhookManager**: Manages webhook subscriptions and data storage
+- **BackgroundService**: Periodic task scheduler for webhook notifications
 
 ### Controllers Layer
 FastAPI route handlers:

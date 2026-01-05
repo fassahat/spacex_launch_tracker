@@ -6,7 +6,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
 from app.config import settings
-from app.controllers import launch_controller, stats_controller, web_controller
+from app.controllers import launch_controller, stats_controller, web_controller, webhook_controller
+from app.services.background_service import start_background_service
 
 
 def create_app() -> FastAPI:
@@ -33,10 +34,14 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Start background service for webhook notifications
+    start_background_service()
+
     # Register routers
     app.include_router(launch_controller.router)
     app.include_router(stats_controller.router)
     app.include_router(web_controller.router)
+    app.include_router(webhook_controller.router)
 
     return app
 

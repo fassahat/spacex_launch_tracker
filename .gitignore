@@ -31,7 +31,6 @@ htmlcov/
 
 # IDEs
 .vscode/
-.claude/
 .idea/
 *.swp
 *.swo
@@ -44,6 +43,10 @@ htmlcov/
 # Cache
 .cache/
 *.cache
+
+# Webhook data files
+app/data/webhooks.json
+app/data/launches_cache.json
 
 # OS
 .DS_Store
