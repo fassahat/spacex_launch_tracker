@@ -1,7 +1,7 @@
 """Webhook management service using JSON file storage."""
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
@@ -41,7 +41,7 @@ def add_webhook(url: str, description: Optional[str] = None) -> dict:
         "url": url,
         "description": description,
         "active": True,
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
 
     webhooks.append(webhook)
@@ -89,5 +89,5 @@ def save_cached_launch_ids(launch_ids: List[str]) -> None:
     with open(LAUNCHES_CACHE, "w") as f:
         json.dump({
             "launch_ids": list(launch_ids),
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }, f, indent=2)

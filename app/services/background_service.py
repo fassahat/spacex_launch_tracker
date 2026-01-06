@@ -6,7 +6,7 @@ import time
 
 import requests
 import schedule
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.lib.spacex_api import SpaceXAPIClient
 from app.services.webhook_manager import (
@@ -92,7 +92,7 @@ def _send_webhook_notifications(launch: dict, webhooks: list):
 
     payload = {
         "event": "new_launch",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "launch": {
             "id": launch.get("id"),
             "name": launch.get("name"),
