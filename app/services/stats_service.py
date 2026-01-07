@@ -1,6 +1,6 @@
 """Service for calculating launch statistics."""
 
-from typing import Dict
+from typing import Dict, Optional
 from collections import defaultdict
 from datetime import datetime
 
@@ -21,6 +21,18 @@ class StatsService:
             api_client: SpaceX API client instance
         """
         self.api_client = api_client
+        self._launches_cache: Optional[list[Launch]] = None
+
+    async def _get_launches(self) -> list[Launch]:
+        """
+        Get all launches with caching for the lifetime of this service instance.
+
+        Returns:
+            List of all launches
+        """
+        if self._launches_cache is None:
+            self._launches_cache = await self.api_client.get_all_launches()
+        return self._launches_cache
 
     async def get_success_rate_by_rocket(self) -> Dict[str, dict]:
         """
@@ -29,7 +41,7 @@ class StatsService:
         Returns:
             Dictionary mapping rocket names to their statistics
         """
-        launches = await self.api_client.get_all_launches()
+        launches = await self._get_launches()
         rockets = await self.api_client.get_all_rockets()
 
         # Create rocket ID to name mapping
@@ -68,7 +80,7 @@ class StatsService:
         Returns:
             Dictionary mapping launchpad names to launch counts
         """
-        launches = await self.api_client.get_all_launches()
+        launches = await self._get_launches()
         launchpads = await self.api_client.get_all_launchpads()
 
         # Create launchpad ID to name mapping
@@ -93,7 +105,7 @@ class StatsService:
         Returns:
             Dictionary with monthly and yearly launch frequencies
         """
-        launches = await self.api_client.get_all_launches()
+        launches = await self._get_launches()
 
         monthly_counts = defaultdict(int)
         yearly_counts = defaultdict(int)
@@ -118,7 +130,7 @@ class StatsService:
         Returns:
             Dictionary with overall statistics
         """
-        launches = await self.api_client.get_all_launches()
+        launches = await self._get_launches()
 
         total_launches = len(launches)
         successful = sum(1 for l in launches if l.success is True)
