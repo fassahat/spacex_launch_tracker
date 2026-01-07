@@ -1,7 +1,6 @@
 """Service for launch data operations and filtering."""
 
 from typing import Optional
-from datetime import datetime
 
 from app.models.launch import Launch, LaunchFilter
 from app.lib.spacex_api import SpaceXAPIClient

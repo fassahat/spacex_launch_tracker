@@ -1,6 +1,5 @@
 """Webhook management service using JSON file storage."""
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
@@ -20,7 +19,7 @@ def load_webhooks() -> List[dict]:
         return []
 
     try:
-        with open(WEBHOOKS_FILE, "r") as f:
+        with open(WEBHOOKS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, FileNotFoundError):
         return []
@@ -28,7 +27,7 @@ def load_webhooks() -> List[dict]:
 
 def save_webhooks(webhooks: List[dict]) -> None:
     """Save webhooks to JSON file."""
-    with open(WEBHOOKS_FILE, "w") as f:
+    with open(WEBHOOKS_FILE, "w", encoding="utf-8") as f:
         json.dump(webhooks, f, indent=2)
 
 
@@ -77,7 +76,7 @@ def get_cached_launch_ids() -> set:
         return set()
 
     try:
-        with open(LAUNCHES_CACHE, "r") as f:
+        with open(LAUNCHES_CACHE, "r", encoding="utf-8") as f:
             data = json.load(f)
             return set(data.get("launch_ids", []))
     except (json.JSONDecodeError, FileNotFoundError):
@@ -86,7 +85,7 @@ def get_cached_launch_ids() -> set:
 
 def save_cached_launch_ids(launch_ids: List[str]) -> None:
     """Save launch IDs to cache."""
-    with open(LAUNCHES_CACHE, "w") as f:
+    with open(LAUNCHES_CACHE, "w", encoding="utf-8") as f:
         json.dump({
             "launch_ids": list(launch_ids),
             "updated_at": datetime.now(timezone.utc).isoformat()

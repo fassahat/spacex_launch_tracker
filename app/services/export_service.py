@@ -50,7 +50,11 @@ class ExportService:
         launch_filters = LaunchFilter(
             rocket_name=rocket_name if rocket_name else None,
             launchpad_name=launchpad_name if launchpad_name else None,
-            success=success.lower() == 'true' if success and success.lower() in ('true', 'false') else None,
+            success=(
+                success.lower() == 'true'
+                if success and success.lower() in ('true', 'false')
+                else None
+            ),
             date_from=date_from_utc,
             date_to=date_to_utc,
             limit=None,
@@ -94,7 +98,11 @@ class ExportService:
                 launch.date_utc.isoformat() if launch.date_utc else 'TBD',
                 rocket_map.get(launch.rocket, launch.rocket or 'Unknown'),
                 launchpad_map.get(launch.launchpad, launch.launchpad or 'Unknown'),
-                'Success' if launch.success is True else 'Failed' if launch.success is False else 'Upcoming',
+                (
+                    'Success' if launch.success is True
+                    else 'Failed' if launch.success is False
+                    else 'Upcoming'
+                ),
                 launch.flight_number or '-',
                 launch.details or ''
             ])

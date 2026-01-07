@@ -61,5 +61,7 @@ class LaunchFilter(BaseModel):
     rocket_name: Optional[str] = Field(None, description="Filter by rocket name")
     success: Optional[bool] = Field(None, description="Filter by success status")
     launchpad_name: Optional[str] = Field(None, description="Filter by launchpad name")
-    limit: Optional[int] = Field(100, description="Maximum results to return (None for all)", ge=1, le=1000)
+    limit: Optional[int] = Field(
+        100, description="Maximum results to return (None for all)", ge=1, le=1000
+    )
     offset: Optional[int] = Field(0, description="Number of results to skip", ge=0)

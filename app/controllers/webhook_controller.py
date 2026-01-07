@@ -1,9 +1,8 @@
 """Webhook management API endpoints."""
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
-from typing import Optional
 
 from app.services.webhook_manager import (
     add_webhook,

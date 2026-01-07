@@ -3,10 +3,10 @@ import asyncio
 import logging
 import threading
 import time
+from datetime import datetime, timezone
 
 import requests
 import schedule
-from datetime import datetime, timezone
 
 from app.lib.spacex_api import SpaceXAPIClient
 from app.services.webhook_manager import (
@@ -50,7 +50,7 @@ def check_new_launches():
         new_launch_ids = current_ids - cached_ids
 
         if new_launch_ids:
-            logger.info(f"Found {len(new_launch_ids)} new launches!")
+            logger.info("Found %d new launches!", len(new_launch_ids))
 
             # Get new launch data
             new_launches = [l for l in launches if l["id"] in new_launch_ids]
@@ -73,7 +73,7 @@ def check_new_launches():
             save_cached_launch_ids(list(current_ids))
 
     except Exception as e:
-        logger.error(f"Error checking new launches: {e}", exc_info=True)
+        logger.error("Error checking new launches: %s", e, exc_info=True)
 
 
 def _send_webhook_notifications(launch: dict, webhooks: list):
@@ -106,7 +106,10 @@ def _send_webhook_notifications(launch: dict, webhooks: list):
 
     for webhook in webhooks:
         try:
-            logger.info(f"Sending webhook to {webhook['url']} for launch '{launch.get('name')}'")
+            logger.info(
+                "Sending webhook to %s for launch '%s'",
+                webhook['url'], launch.get('name')
+            )
 
             response = requests.post(
                 webhook["url"],
@@ -116,12 +119,12 @@ def _send_webhook_notifications(launch: dict, webhooks: list):
             )
 
             if response.ok:
-                logger.info(f"✓ Webhook sent successfully: {response.status_code}")
+                logger.info("✓ Webhook sent successfully: %s", response.status_code)
             else:
-                logger.warning(f"✗ Webhook failed: {response.status_code}")
+                logger.warning("✗ Webhook failed: %s", response.status_code)
 
         except Exception as e:
-            logger.error(f"✗ Error sending webhook to {webhook['url']}: {e}")
+            logger.error("✗ Error sending webhook to %s: %s", webhook['url'], e)
 
 
 def _run_scheduler():

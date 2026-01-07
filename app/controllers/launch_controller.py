@@ -73,9 +73,13 @@ async def get_launches(
         return launches
 
     except SpaceXAPIError as e:
-        raise HTTPException(status_code=503, detail=f"SpaceX API error: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"SpaceX API error: {str(e)}"
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal error: {str(e)}"
+        ) from e
 
 
 @router.get("/{launch_id}", response_model=Launch)
@@ -100,6 +104,10 @@ async def get_launch_by_id(
     except HTTPException:
         raise
     except SpaceXAPIError as e:
-        raise HTTPException(status_code=503, detail=f"SpaceX API error: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"SpaceX API error: {str(e)}"
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal error: {str(e)}"
+        ) from e

@@ -34,9 +34,13 @@ async def get_success_rate_by_rocket(
     try:
         return await stats_service.get_success_rate_by_rocket()
     except SpaceXAPIError as e:
-        raise HTTPException(status_code=503, detail=f"SpaceX API error: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"SpaceX API error: {str(e)}"
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal error: {str(e)}"
+        ) from e
 
 
 @router.get("/launchpads", response_model=Dict[str, dict])
@@ -51,9 +55,13 @@ async def get_launches_by_launchpad(
     try:
         return await stats_service.get_launches_by_launchpad()
     except SpaceXAPIError as e:
-        raise HTTPException(status_code=503, detail=f"SpaceX API error: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"SpaceX API error: {str(e)}"
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal error: {str(e)}"
+        ) from e
 
 
 @router.get("/frequency", response_model=Dict[str, dict])
@@ -68,9 +76,13 @@ async def get_launch_frequency(
     try:
         return await stats_service.get_launch_frequency()
     except SpaceXAPIError as e:
-        raise HTTPException(status_code=503, detail=f"SpaceX API error: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"SpaceX API error: {str(e)}"
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal error: {str(e)}"
+        ) from e
 
 
 @router.get("/overall", response_model=dict)
@@ -85,6 +97,10 @@ async def get_overall_statistics(
     try:
         return await stats_service.get_overall_statistics()
     except SpaceXAPIError as e:
-        raise HTTPException(status_code=503, detail=f"SpaceX API error: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"SpaceX API error: {str(e)}"
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal error: {str(e)}"
+        ) from e

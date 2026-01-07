@@ -130,7 +130,9 @@ async def launches_page(
                 "launches": launches,
                 "rocket_map": rocket_map,
                 "launchpad_map": launchpad_map,
-                "filters": build_filter_dict(rocket_name, launchpad_name, success, date_from, date_to)
+                "filters": build_filter_dict(
+                    rocket_name, launchpad_name, success, date_from, date_to
+                )
             }
         )
     except Exception as e:
@@ -141,7 +143,9 @@ async def launches_page(
                 "launches": [],
                 "rocket_map": {},
                 "launchpad_map": {},
-                "filters": build_filter_dict(rocket_name, launchpad_name, success, date_from, date_to),
+                "filters": build_filter_dict(
+                    rocket_name, launchpad_name, success, date_from, date_to
+                ),
                 "error": f"Error loading launches: {str(e)}"
             }
         )
@@ -192,7 +196,10 @@ async def export_launches_csv(
             csv_stream,
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename=spacex_launches_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                "Content-Disposition": (
+                    f"attachment; filename=spacex_launches_"
+                    f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                )
             }
         )
     except Exception as e:
@@ -224,7 +231,10 @@ async def export_launches_json(
             json_stream,
             media_type="application/json",
             headers={
-                "Content-Disposition": f"attachment; filename=spacex_launches_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                "Content-Disposition": (
+                    f"attachment; filename=spacex_launches_"
+                    f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                )
             }
         )
     except Exception as e:

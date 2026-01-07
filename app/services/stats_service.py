@@ -2,11 +2,8 @@
 
 from typing import Dict, Optional
 from collections import defaultdict
-from datetime import datetime
 
 from app.models.launch import Launch
-from app.models.rocket import Rocket
-from app.models.launchpad import Launchpad
 from app.lib.spacex_api import SpaceXAPIClient
 
 
@@ -137,7 +134,11 @@ class StatsService:
         failed = sum(1 for l in launches if l.success is False)
         upcoming = sum(1 for l in launches if l.upcoming is True)
 
-        success_rate = (successful / (successful + failed) * 100) if (successful + failed) > 0 else 0
+        success_rate = (
+            (successful / (successful + failed) * 100)
+            if (successful + failed) > 0
+            else 0
+        )
 
         return {
             "total_launches": total_launches,
